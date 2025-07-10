@@ -1,0 +1,42 @@
+CREATE TABLE IF NOT EXISTS leads_schools (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    slug TEXT,
+    uid TEXT UNIQUE,
+    user_name TEXT,
+    linkedin_profile_url TEXT,
+    linkedin_image_url TEXT,
+    title TEXT,
+    location TEXT,
+    req_school TEXT,
+    req_country TEXT,
+    timestamp TEXT
+);
+
+CREATE TABLE IF NOT EXISTS leads_salesnav (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    slug TEXT,
+    uid TEXT UNIQUE,
+    user_name TEXT,
+    linkedin_profile_url TEXT,
+    linkedin_image_url TEXT,
+    title TEXT,
+    location TEXT,
+    about TEXT,
+    headline TEXT,
+    skills TEXT,
+    experience TEXT,
+    req_school TEXT,
+    req_country TEXT,
+    timestamp TEXT
+);
+
+-- Sample data for testing
+INSERT INTO leads_schools (slug, uid, user_name, linkedin_profile_url, linkedin_image_url, title, location, req_school, req_country, timestamp) VALUES
+('stanford-2024', 'uid123', 'John Richardson', 'https://linkedin.com/in/johnrichardson', 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop', 'Senior Marketing Director', 'San Francisco, CA', 'Stanford University', 'United States', '2024-01-10T10:00:00Z'),
+('oxford-2024', 'uid101', 'Emily Watson', 'https://linkedin.com/in/emilywatson', 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=100&h=100&fit=crop', 'Head of Business Development', 'London, UK', 'Oxford University', 'United Kingdom', '2024-01-08T14:00:00Z'),
+('mit-2024', 'uid789', 'Michael Torres', 'https://linkedin.com/in/michaeltorres', 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop', 'Chief Technology Officer', 'Austin, TX', 'MIT', 'United States', '2024-01-09T09:00:00Z');
+
+INSERT INTO leads_salesnav (slug, uid, user_name, linkedin_profile_url, linkedin_image_url, title, location, about, headline, skills, experience, req_school, req_country, timestamp) VALUES
+('harvard-2024', 'uid456', 'Sarah Chen', 'https://linkedin.com/in/sarahchen', 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=100&h=100&fit=crop', 'VP of Product Strategy', 'New York, NY', 'Experienced product leader with 12+ years in tech strategy and innovation.', 'VP of Product Strategy at InnovateTech | Harvard MBA | Product Innovation Expert', 'Product Strategy, Innovation Management, Team Leadership, Data Analytics', 'VP Product Strategy at InnovateTech (2021-Present), Senior Product Manager at TechCorp (2018-2021)', 'Harvard Business School', 'United States', '2024-01-10T05:00:00Z'),
+('mit-2024', 'uid789', 'Michael Torres', 'https://linkedin.com/in/michaeltorres', 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop', 'Chief Technology Officer', 'Austin, TX', 'Technology executive with expertise in scalable systems and team leadership.', 'CTO at ScaleTech | MIT Alum | Engineering Leadership & Architecture', 'System Architecture, Team Leadership, Cloud Computing, DevOps', 'CTO at ScaleTech (2020-Present), Senior Engineering Manager at BigTech (2017-2020)', 'MIT', 'United States', '2024-01-09T09:00:00Z'),
+('toronto-2024', 'uid112', 'David Kim', 'https://linkedin.com/in/davidkim', 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=100&h=100&fit=crop', 'Senior Sales Director', 'Toronto, Canada', 'Sales leadership professional with proven track record in B2B enterprise sales.', 'Senior Sales Director at GrowthCorp | Enterprise Sales Expert | Revenue Growth', 'Enterprise Sales, Team Leadership, Customer Relations, Revenue Strategy', 'Senior Sales Director at GrowthCorp (2019-Present), Sales Manager at SalesForce (2016-2019)', 'University of Toronto', 'Canada', '2024-01-07T12:00:00Z');
