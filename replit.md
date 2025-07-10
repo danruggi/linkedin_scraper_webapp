@@ -2,11 +2,25 @@
 
 ## Overview
 
-This is a full-stack lead management system built with React, Express.js, and PostgreSQL. The application allows users to view, filter, and manage leads from two sources: schools and Sales Navigator. It features a modern dashboard with statistics, filtering capabilities, and detailed lead information.
+This is a full-stack lead management system available in two versions:
+
+### TypeScript Version (Original)
+- Built with React, Express.js, and SQLite
+- Located in the root directory
+- Full-featured web application with modern UI
+
+### Python Version (Current)
+- Built with FastAPI backend and Streamlit frontend
+- Located in the `python_app/` directory
+- Same functionality as TypeScript version but in Python
+- Uses SQLite database from `data/leads.db`
+
+The application allows users to view, filter, and manage leads from two sources: schools and Sales Navigator. It features a modern dashboard with statistics, filtering capabilities, and detailed lead information.
 
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
+User requested Python version due to TypeScript complexity.
 
 ## System Architecture
 
