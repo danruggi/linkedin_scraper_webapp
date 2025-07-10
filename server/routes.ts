@@ -30,7 +30,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get lead statistics
-  app.get("/api/leads/stats", async (req, res) => {
+  app.get("/api/stats", async (req, res) => {
     try {
       const stats = await storage.getLeadStats();
       res.json(stats);

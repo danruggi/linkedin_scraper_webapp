@@ -31,9 +31,9 @@ export default function Dashboard() {
   });
 
   const { data: stats } = useQuery({
-    queryKey: ["/api/leads/stats"],
+    queryKey: ["/api/stats"],
     queryFn: async () => {
-      const response = await fetch('/api/leads/stats');
+      const response = await fetch('/api/stats');
       if (!response.ok) {
         throw new Error('Failed to fetch stats');
       }

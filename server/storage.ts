@@ -6,6 +6,8 @@ import {
   type InsertLeadSchools,
   type InsertLeadSalesnav 
 } from "@shared/schema";
+import sqlite3 from "sqlite3";
+import { promisify } from "util";
 
 export interface IStorage {
   getLeads(filters?: LeadsFilters): Promise<CombinedLead[]>;
@@ -313,4 +315,201 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+export class SQLiteStorage implements IStorage {
+  private db: sqlite3.Database;
+  private dbAll: (sql: string, params?: any[]) => Promise<any[]>;
+  private dbGet: (sql: string, params?: any[]) => Promise<any>;
+
+  constructor(dbPath: string) {
+    this.db = new sqlite3.Database(dbPath);
+    this.dbAll = promisify(this.db.all.bind(this.db));
+    this.dbGet = promisify(this.db.get.bind(this.db));
+  }
+
+  async getLeads(filters?: LeadsFilters): Promise<CombinedLead[]> {
+    const uniqueLeads = new Map<string, CombinedLead>();
+
+    // Get all leads from schools table
+    const schoolsLeads = await this.dbAll(
+      "SELECT * FROM leads_schools"
+    );
+
+    // Get all leads from salesnav table
+    const salesnavLeads = await this.dbAll(
+      "SELECT * FROM leads_salesnav"
+    );
+
+    // Process schools leads
+    for (const lead of schoolsLeads) {
+      const combinedLead: CombinedLead = {
+        uid: lead.uid,
+        user_name: lead.user_name,
+        title: lead.title,
+        linkedin_profile_url: lead.linkedin_profile_url,
+        linkedin_image_url: lead.linkedin_image_url,
+        location: lead.location,
+        req_school: lead.req_school,
+        req_country: lead.req_country,
+        timestamp: lead.timestamp,
+        about: null,
+        headline: null,
+        skills: null,
+        experience: null,
+        source: 'schools' as const,
+        slug: lead.slug
+      };
+      uniqueLeads.set(lead.uid, combinedLead);
+    }
+
+    // Process salesnav leads
+    for (const lead of salesnavLeads) {
+      const existing = uniqueLeads.get(lead.uid);
+      if (existing) {
+        // Lead exists in both sources
+        const combinedLead: CombinedLead = {
+          ...existing,
+          about: lead.about,
+          headline: lead.headline,
+          skills: lead.skills,
+          experience: lead.experience,
+          source: 'both' as const
+        };
+        uniqueLeads.set(lead.uid, combinedLead);
+      } else {
+        // Lead only in salesnav
+        const combinedLead: CombinedLead = {
+          uid: lead.uid,
+          user_name: lead.user_name,
+          title: lead.title,
+          linkedin_profile_url: lead.linkedin_profile_url,
+          linkedin_image_url: lead.linkedin_image_url,
+          location: lead.location,
+          req_school: lead.req_school,
+          req_country: lead.req_country,
+          timestamp: lead.timestamp,
+          about: lead.about,
+          headline: lead.headline,
+          skills: lead.skills,
+          experience: lead.experience,
+          source: 'salesnav' as const,
+          slug: lead.slug
+        };
+        uniqueLeads.set(lead.uid, combinedLead);
+      }
+    }
+
+    let results = Array.from(uniqueLeads.values());
+
+    // Apply filters
+    if (filters) {
+      if (filters.search) {
+        const searchLower = filters.search.toLowerCase();
+        results = results.filter(lead => 
+          lead.user_name?.toLowerCase().includes(searchLower) ||
+          lead.title?.toLowerCase().includes(searchLower) ||
+          lead.location?.toLowerCase().includes(searchLower) ||
+          lead.req_school?.toLowerCase().includes(searchLower)
+        );
+      }
+
+      if (filters.school) {
+        results = results.filter(lead => 
+          lead.req_school?.toLowerCase().includes(filters.school!.toLowerCase())
+        );
+      }
+
+      if (filters.country) {
+        results = results.filter(lead => 
+          lead.req_country?.toLowerCase().includes(filters.country!.toLowerCase())
+        );
+      }
+
+      if (filters.source) {
+        results = results.filter(lead => lead.source === filters.source);
+      }
+
+      // Apply sorting
+      if (filters.sortBy) {
+        results.sort((a, b) => {
+          let aVal = '';
+          let bVal = '';
+
+          switch (filters.sortBy) {
+            case 'name':
+              aVal = a.user_name || '';
+              bVal = b.user_name || '';
+              break;
+            case 'title':
+              aVal = a.title || '';
+              bVal = b.title || '';
+              break;
+            case 'location':
+              aVal = a.location || '';
+              bVal = b.location || '';
+              break;
+            case 'timestamp':
+              aVal = a.timestamp || '';
+              bVal = b.timestamp || '';
+              break;
+          }
+
+          const comparison = aVal.localeCompare(bVal);
+          return filters.sortOrder === 'desc' ? -comparison : comparison;
+        });
+      }
+    }
+
+    return results;
+  }
+
+  async getLeadByUid(uid: string): Promise<CombinedLead | undefined> {
+    const leads = await this.getLeads();
+    return leads.find(lead => lead.uid === uid);
+  }
+
+  async getLeadStats(): Promise<{
+    totalLeads: number;
+    schoolsOnly: number;
+    salesnavOnly: number;
+    both: number;
+  }> {
+    const leads = await this.getLeads();
+    const schoolsOnly = leads.filter(lead => lead.source === 'schools').length;
+    const salesnavOnly = leads.filter(lead => lead.source === 'salesnav').length;
+    const both = leads.filter(lead => lead.source === 'both').length;
+
+    return {
+      totalLeads: leads.length,
+      schoolsOnly,
+      salesnavOnly,
+      both
+    };
+  }
+
+  async getUniqueSchools(): Promise<string[]> {
+    const schools = await this.dbAll(
+      "SELECT DISTINCT req_school FROM leads_schools WHERE req_school IS NOT NULL AND req_school != '' " +
+      "UNION " +
+      "SELECT DISTINCT req_school FROM leads_salesnav WHERE req_school IS NOT NULL AND req_school != '' " +
+      "ORDER BY req_school"
+    );
+    return schools.map(row => row.req_school);
+  }
+
+  async getUniqueCountries(): Promise<string[]> {
+    const countries = await this.dbAll(
+      "SELECT DISTINCT req_country FROM leads_schools WHERE req_country IS NOT NULL AND req_country != '' " +
+      "UNION " +
+      "SELECT DISTINCT req_country FROM leads_salesnav WHERE req_country IS NOT NULL AND req_country != '' " +
+      "ORDER BY req_country"
+    );
+    return countries.map(row => row.req_country);
+  }
+
+  close(): void {
+    this.db.close();
+  }
+}
+
+// Use SQLite storage instead of memory storage
+export const storage = new SQLiteStorage('./data/leads.db');
